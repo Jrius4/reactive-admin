@@ -3,6 +3,8 @@ const { initializeApp } = require("firebase/app");
 const { getAnalytics } = require("firebase/analytics");
 const { errorHandler } = require("./helpers.js");
 const { getFirestore, doc, setDoc } = require("firebase/firestore");
+const admin = require("firebase-admin");
+const ServiceAccount = require("./../../service-secret-key.json");
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -33,8 +35,8 @@ const firebaseConfig = {
     storageBucket: FIREBASE_STORAGE_BUCKET,
     messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
     appId: FIREBASE_APP_ID,
-    measurementId: FIREBASE_MEASUREMENT_ID
-};
+    measurementId: FIREBASE_MEASUREMENT_ID,
+}
 
 let app;
 let firestoreDB;
@@ -42,8 +44,10 @@ const initializeFirebase = () => {
     try {
         // Initialize Firebase
         app = initializeApp(firebaseConfig);
+        admin.initializeApp({ credential: admin.credential.cert(ServiceAccount) });
         firestoreDB = getFirestore(app);
-        return { app, firestoreDB };
+        return app;
+
     } catch (error) {
         errorHandler(error, "firebase-initializeFirebase");
     }
@@ -70,5 +74,8 @@ const getFirebase = () => app;
 module.exports = {
     getFirebase,
     initializeFirebase,
+    firestoreDB,
+    app,
+    admin,
     uploadProcessData
 }

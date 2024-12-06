@@ -7,4 +7,4 @@ node_modules
 .env.production.local
 
 *.log
-*-adminsdk-1*
+service-secret-key.json

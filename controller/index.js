@@ -1,4 +1,4 @@
-const { initializeFirebase, uploadProcessData, getFirebase } = require("./lib/firebase");
+const { uploadProcessData } = require("./lib/firebase");
 const { errorHandler } = require("./lib/helpers");
 
 async function handler(req, method) {

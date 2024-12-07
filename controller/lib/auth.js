@@ -1,4 +1,4 @@
-// const { initializeApp } = require('firebase/app');
+
 const { app, admin, getFirebase } = require("./firebase")
 const { getFirestore } = require("firebase-admin/firestore")
 const {

@@ -1,10 +1,12 @@
-const { uploadProcessData } = require("./lib/firebase");
+const { uploadProcessData, admin, firestoreDB } = require("./lib/firebase");
 const { errorHandler } = require("./lib/helpers");
+
 
 async function handler(req, method) {
     try {
         if (method === "GET") {
             const path = req.path;
+            console.log(path);
             if (path === "/") {
                 return "Hello World";
             }
@@ -19,9 +21,11 @@ async function handler(req, method) {
         }
         else if (method === "POST") {
             const path = req.path;
-            const { } = req;
+            console.log(path);
 
-            if (path === "/process") {
+            const { } = req.body;
+
+            if (path === "/api/test/process") {
                 const data = req.body;
                 await uploadProcessData();
                 return "Process data uploaded";
@@ -33,7 +37,92 @@ async function handler(req, method) {
     }
 }
 
+//  fcm notification
+async function sendNotifications(params) {
+    try {
+        const { title, body, token, data } = params;
+
+        console.log({ params });
+        console.log({ title, body, token, data });
+
+
+        if (!token || !title || !body) {
+            throw new Error({ message: "Missing required fields" });
+        }
+
+        const message = {
+            notification: { title, body },
+            token: token,
+            data: data || {}
+        };
+
+        const response = await admin.messaging().send(message);
+
+
+        // const response = await admin.messaging().sendEachForMulticast(message);
+        return response;
+    } catch (error) {
+        errorHandler(error, "sendNotifications");
+        throw error;
+    }
+}
+
+async function triggerNotifications(params) {
+    try {
+        const { title, body, data } = params;
+
+        console.log({ params });
+        console.log({ title, body, data, firestoreDB });
+
+        const tokenSnapshot = await firestoreDB.collection("device_tokens").get();
+        const tokens = tokenSnapshot.docs.map(doc => doc.data().token);
+
+        console.log({ tokens });
+        if (!title || !body) {
+            throw new Error({ message: "Missing required fields" });
+        }
+
+        const message = {
+            notification: { title, body },
+            // tokens: tokens,
+            data: data || {}
+        };
+
+        const response = await admin.messaging().sendAll([message])
+
+        // const response = await admin.messaging().sendEachForMulticast(message);
+        return response;
+    } catch (error) {
+        errorHandler(error, "sendNotifications");
+        throw error;
+    }
+}
+
+async function dispatchTopicNotification(params) {
+    try {
+        const { topic, data, title, body } = params;
+        if (!topic) {
+            throw new Error({ message: "Missing required fields" });
+        }
+
+        const message = {
+            notification: { title, body },
+            topic: topic,
+            data: data || {}
+        };
+
+        const response = await admin.messaging().send(message);
+        return response;
+    } catch (error) {
+        errorHandler(error, "dispatchTopic");
+        throw error;
+    }
+}
+
 module.exports = {
-    handler
+    handler,
+    sendNotifications,
+    triggerNotifications,
+    dispatchTopicNotification
 }
 
